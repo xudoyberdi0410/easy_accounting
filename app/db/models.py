@@ -23,6 +23,7 @@ from app.db.base import Base
 
 # ── Enums ────────────────────────────────────────────────────────────────────
 
+
 class AccountType(str, enum.Enum):
     CASH = "cash"
     CARD = "card"
@@ -57,6 +58,7 @@ class BudgetPeriod(str, enum.Enum):
 
 # ── Models ───────────────────────────────────────────────────────────────────
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -85,9 +87,7 @@ class User(Base):
 
 class Account(Base):
     __tablename__ = "accounts"
-    __table_args__ = (
-        Index("idx_accounts_user", "user_id"),
-    )
+    __table_args__ = (Index("idx_accounts_user", "user_id"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int] = mapped_column(
@@ -146,19 +146,23 @@ class Transaction(Base):
             name="ck_transfer_has_to_account",
         ),
         Index(
-            "idx_transactions_user", "user_id",
+            "idx_transactions_user",
+            "user_id",
             postgresql_where="deleted_at IS NULL",
         ),
         Index(
-            "idx_transactions_account", "account_id",
+            "idx_transactions_account",
+            "account_id",
             postgresql_where="deleted_at IS NULL",
         ),
         Index(
-            "idx_transactions_date", "occurred_at",
+            "idx_transactions_date",
+            "occurred_at",
             postgresql_where="deleted_at IS NULL",
         ),
         Index(
-            "idx_transactions_type", "type",
+            "idx_transactions_type",
+            "type",
             postgresql_where="deleted_at IS NULL",
         ),
     )
@@ -210,9 +214,7 @@ class Transaction(Base):
 
 class Tag(Base):
     __tablename__ = "tags"
-    __table_args__ = (
-        UniqueConstraint("user_id", "name", name="uq_tag_user_name"),
-    )
+    __table_args__ = (UniqueConstraint("user_id", "name", name="uq_tag_user_name"),)
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     user_id: Mapped[int] = mapped_column(
@@ -268,7 +270,8 @@ class RecurringTransaction(Base):
     __tablename__ = "recurring_transactions"
     __table_args__ = (
         Index(
-            "idx_recurring_next_run", "next_run_at",
+            "idx_recurring_next_run",
+            "next_run_at",
             postgresql_where="is_active = true",
         ),
     )
@@ -304,7 +307,12 @@ class RecurringTransaction(Base):
 class ExchangeRate(Base):
     __tablename__ = "exchange_rates"
     __table_args__ = (
-        Index("idx_exchange_rates_pair_time", "base_currency", "quote_currency", "fetched_at"),
+        Index(
+            "idx_exchange_rates_pair_time",
+            "base_currency",
+            "quote_currency",
+            "fetched_at",
+        ),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
@@ -314,3 +322,31 @@ class ExchangeRate(Base):
     fetched_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now()
     )
+
+
+class AIPattern(Base):
+    """Learned AI patterns: merchant/keyword → category, account, type."""
+
+    __tablename__ = "ai_patterns"
+    __table_args__ = (Index("idx_ai_patterns_user", "user_id"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    pattern_text: Mapped[str] = mapped_column(String(256), nullable=False)
+    category_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("categories.id", ondelete="SET NULL")
+    )
+    account_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("accounts.id", ondelete="SET NULL")
+    )
+    transaction_type: Mapped[str | None] = mapped_column(String(16))
+    note_template: Mapped[str | None] = mapped_column(String(256))
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), server_default=func.now()
+    )
+
+    user: Mapped["User"] = relationship()
+    category: Mapped["Category | None"] = relationship()
+    account: Mapped["Account | None"] = relationship()

@@ -36,3 +36,18 @@ class AddBudget(StatesGroup):
 
 class RenameAccount(StatesGroup):
     name = State()
+
+
+class AITransaction(StatesGroup):
+    # Q&A loop: AI asks questions, user answers
+    answering_question = State()
+    # Inline entity creation (account / category / tag)
+    confirm_create_entity = State()
+    # Final confirmation: user sees parsed data, can confirm / cancel / correct
+    confirm = State()
+    # After save: offer to remember a pattern
+    confirm_pattern = State()
+    # Fallback: manual field selection
+    missing_account = State()
+    missing_category = State()
+    missing_to_account = State()

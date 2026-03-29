@@ -8,6 +8,7 @@ dependencies = [
     "aiogram>=3.26.0",
     "alembic>=1.18.4",
     "asyncpg>=0.31.0",
+    "google-genai>=1.69.0",
     "pydantic-settings>=2.13.1",
     "sqlalchemy>=2.0.48",
 ]

@@ -7,6 +7,7 @@ from app.bot.handlers.category import router as category_router
 from app.bot.handlers.transaction import router as transaction_router
 from app.bot.handlers.budget import router as budget_router
 from app.bot.handlers.settings import router as settings_router
+from app.bot.handlers.ai import router as ai_router
 
 
 def setup_routers() -> Router:
@@ -18,4 +19,5 @@ def setup_routers() -> Router:
     root.include_router(transaction_router)
     root.include_router(budget_router)
     root.include_router(settings_router)
+    root.include_router(ai_router)
     return root
