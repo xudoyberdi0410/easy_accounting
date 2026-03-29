@@ -1,0 +1,2046 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dineug/erd-editor/main/json-schema/schema.json",
+  "version": "3.0.0",
+  "settings": {
+    "width": 3200,
+    "height": 2600,
+    "scrollTop": -758.7964,
+    "scrollLeft": -1222.2609,
+    "zoomLevel": 0.1,
+    "show": 431,
+    "database": 4,
+    "databaseName": "finance_bot",
+    "canvasType": "@dineug/erd-editor/builtin-schema-sql",
+    "language": 1,
+    "tableNameCase": 4,
+    "columnNameCase": 2,
+    "bracketType": 1,
+    "relationshipDataTypeSync": true,
+    "relationshipOptimization": false,
+    "columnOrder": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      32,
+      64
+    ],
+    "maxWidthComment": -1,
+    "ignoreSaveSettings": 0
+  },
+  "doc": {
+    "tableIds": [
+      "t001",
+      "t002",
+      "t003",
+      "t004",
+      "t005",
+      "t006",
+      "t007",
+      "t008",
+      "t009"
+    ],
+    "relationshipIds": [
+      "r001",
+      "r002",
+      "r003",
+      "r004",
+      "r005",
+      "r006",
+      "r007",
+      "r008",
+      "r009",
+      "r010",
+      "r011",
+      "r012",
+      "r013",
+      "r014",
+      "r015"
+    ],
+    "indexIds": [],
+    "memoIds": []
+  },
+  "collections": {
+    "tableEntities": {
+      "t001": {
+        "id": "t001",
+        "name": "users",
+        "comment": "Telegram users",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 620,
+          "y": 280,
+          "zIndex": 1,
+          "widthName": 60,
+          "widthComment": 81,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t002": {
+        "id": "t002",
+        "name": "accounts",
+        "comment": "User accounts (cash, card, crypto…)",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 1180,
+          "y": 60,
+          "zIndex": 2,
+          "widthName": 60,
+          "widthComment": 187,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t003": {
+        "id": "t003",
+        "name": "categories",
+        "comment": "Income / expense categories (hierarchical)",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 1181.6393,
+          "y": 560,
+          "zIndex": 3,
+          "widthName": 60,
+          "widthComment": 224,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774712986459,
+          "createAt": 1774632656242
+        }
+      },
+      "t004": {
+        "id": "t004",
+        "name": "transactions",
+        "comment": "Income, expense, transfer records",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 1840,
+          "y": 180,
+          "zIndex": 4,
+          "widthName": 66,
+          "widthComment": 179,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t005": {
+        "id": "t005",
+        "name": "tags",
+        "comment": "User-defined tags",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 1180,
+          "y": 1060,
+          "zIndex": 5,
+          "widthName": 60,
+          "widthComment": 96,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t006": {
+        "id": "t006",
+        "name": "transaction_tags",
+        "comment": "M:N junction — transactions ↔ tags",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 1840,
+          "y": 860,
+          "zIndex": 6,
+          "widthName": 88,
+          "widthComment": 192,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t007": {
+        "id": "t007",
+        "name": "budgets",
+        "comment": "Spending limits per category per period",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 60,
+          "y": 700,
+          "zIndex": 7,
+          "widthName": 60,
+          "widthComment": 213,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t008": {
+        "id": "t008",
+        "name": "exchange_rates",
+        "comment": "Historical currency rates (append-only)",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 60,
+          "y": 60,
+          "zIndex": 8,
+          "widthName": 83,
+          "widthComment": 207,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "t009": {
+        "id": "t009",
+        "name": "recurring_transactions",
+        "comment": "Recurring payment templates (cron-based)",
+        "columnIds": [],
+        "seqColumnIds": [],
+        "ui": {
+          "x": 620,
+          "y": 980,
+          "zIndex": 9,
+          "widthName": 119,
+          "widthComment": 228,
+          "color": ""
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      }
+    },
+    "tableColumnEntities": {
+      "c001": {
+        "id": "c001",
+        "tableId": "t001",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c002": {
+        "id": "c002",
+        "tableId": "t001",
+        "name": "telegram_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 12,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c003": {
+        "id": "c003",
+        "tableId": "t001",
+        "name": "username",
+        "comment": "",
+        "dataType": "VARCHAR(64)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c004": {
+        "id": "c004",
+        "tableId": "t001",
+        "name": "language_code",
+        "comment": "",
+        "dataType": "VARCHAR(8)",
+        "default": "'ru'",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 120,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c005": {
+        "id": "c005",
+        "tableId": "t001",
+        "name": "default_currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "'USD'",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 140,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c006": {
+        "id": "c006",
+        "tableId": "t001",
+        "name": "is_active",
+        "comment": "",
+        "dataType": "BOOLEAN",
+        "default": "TRUE",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c007": {
+        "id": "c007",
+        "tableId": "t001",
+        "name": "created_at",
+        "comment": "",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c008": {
+        "id": "c008",
+        "tableId": "t001",
+        "name": "updated_at",
+        "comment": "",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c009": {
+        "id": "c009",
+        "tableId": "t002",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c010": {
+        "id": "c010",
+        "tableId": "t002",
+        "name": "user_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c011": {
+        "id": "c011",
+        "tableId": "t002",
+        "name": "name",
+        "comment": "",
+        "dataType": "VARCHAR(64)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c012": {
+        "id": "c012",
+        "tableId": "t002",
+        "name": "currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "'USD'",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c013": {
+        "id": "c013",
+        "tableId": "t002",
+        "name": "balance",
+        "comment": "",
+        "dataType": "NUMERIC(18,2)",
+        "default": "0",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c014": {
+        "id": "c014",
+        "tableId": "t002",
+        "name": "type",
+        "comment": "",
+        "dataType": "account_type",
+        "default": "'card'",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c015": {
+        "id": "c015",
+        "tableId": "t002",
+        "name": "is_archive",
+        "comment": "",
+        "dataType": "BOOLEAN",
+        "default": "FALSE",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c016": {
+        "id": "c016",
+        "tableId": "t002",
+        "name": "created_at",
+        "comment": "",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c017": {
+        "id": "c017",
+        "tableId": "t003",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c018": {
+        "id": "c018",
+        "tableId": "t003",
+        "name": "user_id",
+        "comment": "NULL = system category",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c019": {
+        "id": "c019",
+        "tableId": "t003",
+        "name": "name",
+        "comment": "",
+        "dataType": "VARCHAR(64)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c020": {
+        "id": "c020",
+        "tableId": "t003",
+        "name": "type",
+        "comment": "",
+        "dataType": "category_type",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c021": {
+        "id": "c021",
+        "tableId": "t003",
+        "name": "icon",
+        "comment": "",
+        "dataType": "VARCHAR(32)",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c022": {
+        "id": "c022",
+        "tableId": "t003",
+        "name": "parent_id",
+        "comment": "Self-ref (2-level hierarchy)",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c023": {
+        "id": "c023",
+        "tableId": "t003",
+        "name": "is_default",
+        "comment": "",
+        "dataType": "BOOLEAN",
+        "default": "FALSE",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c024": {
+        "id": "c024",
+        "tableId": "t004",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c025": {
+        "id": "c025",
+        "tableId": "t004",
+        "name": "user_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c026": {
+        "id": "c026",
+        "tableId": "t004",
+        "name": "account_id",
+        "comment": "Source account",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c027": {
+        "id": "c027",
+        "tableId": "t004",
+        "name": "category_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c028": {
+        "id": "c028",
+        "tableId": "t004",
+        "name": "to_account_id",
+        "comment": "Transfer target",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 120,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c029": {
+        "id": "c029",
+        "tableId": "t004",
+        "name": "amount",
+        "comment": "In account currency",
+        "dataType": "NUMERIC(18,2)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c030": {
+        "id": "c030",
+        "tableId": "t004",
+        "name": "amount_base",
+        "comment": "In user default_currency",
+        "dataType": "NUMERIC(18,2)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c031": {
+        "id": "c031",
+        "tableId": "t004",
+        "name": "currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c032": {
+        "id": "c032",
+        "tableId": "t004",
+        "name": "exchange_rate",
+        "comment": "",
+        "dataType": "NUMERIC(18,6)",
+        "default": "1",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 120,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c033": {
+        "id": "c033",
+        "tableId": "t004",
+        "name": "type",
+        "comment": "",
+        "dataType": "transaction_type",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 160,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c034": {
+        "id": "c034",
+        "tableId": "t004",
+        "name": "note",
+        "comment": "",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c035": {
+        "id": "c035",
+        "tableId": "t004",
+        "name": "source",
+        "comment": "",
+        "dataType": "transaction_source",
+        "default": "'manual'",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 180,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c036": {
+        "id": "c036",
+        "tableId": "t004",
+        "name": "occurred_at",
+        "comment": "Actual time (editable)",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c037": {
+        "id": "c037",
+        "tableId": "t004",
+        "name": "created_at",
+        "comment": "",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c038": {
+        "id": "c038",
+        "tableId": "t004",
+        "name": "deleted_at",
+        "comment": "Soft delete (NULL = active)",
+        "dataType": "TIMESTAMPTZ",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c039": {
+        "id": "c039",
+        "tableId": "t005",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c040": {
+        "id": "c040",
+        "tableId": "t005",
+        "name": "user_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c041": {
+        "id": "c041",
+        "tableId": "t005",
+        "name": "name",
+        "comment": "",
+        "dataType": "VARCHAR(32)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c042": {
+        "id": "c042",
+        "tableId": "t006",
+        "name": "transaction_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 6,
+          "widthName": 120,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c043": {
+        "id": "c043",
+        "tableId": "t006",
+        "name": "tag_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 10,
+        "ui": {
+          "keys": 6,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c044": {
+        "id": "c044",
+        "tableId": "t007",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c045": {
+        "id": "c045",
+        "tableId": "t007",
+        "name": "user_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c046": {
+        "id": "c046",
+        "tableId": "t007",
+        "name": "category_id",
+        "comment": "NULL = all expenses",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c047": {
+        "id": "c047",
+        "tableId": "t007",
+        "name": "limit_amount",
+        "comment": "",
+        "dataType": "NUMERIC(18,2)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c048": {
+        "id": "c048",
+        "tableId": "t007",
+        "name": "currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c049": {
+        "id": "c049",
+        "tableId": "t007",
+        "name": "period",
+        "comment": "",
+        "dataType": "budget_period",
+        "default": "'monthly'",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c050": {
+        "id": "c050",
+        "tableId": "t007",
+        "name": "period_start",
+        "comment": "",
+        "dataType": "DATE",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c051": {
+        "id": "c051",
+        "tableId": "t007",
+        "name": "period_end",
+        "comment": "CHECK > period_start",
+        "dataType": "DATE",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c052": {
+        "id": "c052",
+        "tableId": "t007",
+        "name": "created_at",
+        "comment": "",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c053": {
+        "id": "c053",
+        "tableId": "t008",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c054": {
+        "id": "c054",
+        "tableId": "t008",
+        "name": "base_currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 120,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c055": {
+        "id": "c055",
+        "tableId": "t008",
+        "name": "quote_currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 130,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c056": {
+        "id": "c056",
+        "tableId": "t008",
+        "name": "rate",
+        "comment": "",
+        "dataType": "NUMERIC(18,6)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c057": {
+        "id": "c057",
+        "tableId": "t008",
+        "name": "fetched_at",
+        "comment": "Append-only history log",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c058": {
+        "id": "c058",
+        "tableId": "t009",
+        "name": "id",
+        "comment": "",
+        "dataType": "BIGSERIAL",
+        "default": "",
+        "options": 11,
+        "ui": {
+          "keys": 1,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c059": {
+        "id": "c059",
+        "tableId": "t009",
+        "name": "user_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c060": {
+        "id": "c060",
+        "tableId": "t009",
+        "name": "account_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 2,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c061": {
+        "id": "c061",
+        "tableId": "t009",
+        "name": "category_id",
+        "comment": "",
+        "dataType": "BIGINT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 2,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c062": {
+        "id": "c062",
+        "tableId": "t009",
+        "name": "amount",
+        "comment": "",
+        "dataType": "NUMERIC(18,2)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 70,
+          "widthComment": 60,
+          "widthDataType": 130,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c063": {
+        "id": "c063",
+        "tableId": "t009",
+        "name": "currency",
+        "comment": "",
+        "dataType": "VARCHAR(3)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 90,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c064": {
+        "id": "c064",
+        "tableId": "t009",
+        "name": "type",
+        "comment": "",
+        "dataType": "transaction_type",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 160,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c065": {
+        "id": "c065",
+        "tableId": "t009",
+        "name": "note",
+        "comment": "",
+        "dataType": "TEXT",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c066": {
+        "id": "c066",
+        "tableId": "t009",
+        "name": "cron_expr",
+        "comment": "e.g. 0 9 1 * *",
+        "dataType": "VARCHAR(32)",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 100,
+          "widthComment": 60,
+          "widthDataType": 110,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c067": {
+        "id": "c067",
+        "tableId": "t009",
+        "name": "next_run_at",
+        "comment": "Updated after each run",
+        "dataType": "TIMESTAMPTZ",
+        "default": "",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 110,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c068": {
+        "id": "c068",
+        "tableId": "t009",
+        "name": "is_active",
+        "comment": "",
+        "dataType": "BOOLEAN",
+        "default": "TRUE",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 80,
+          "widthComment": 60,
+          "widthDataType": 80,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "c069": {
+        "id": "c069",
+        "tableId": "t009",
+        "name": "created_at",
+        "comment": "",
+        "dataType": "TIMESTAMPTZ",
+        "default": "NOW()",
+        "options": 8,
+        "ui": {
+          "keys": 0,
+          "widthName": 90,
+          "widthComment": 60,
+          "widthDataType": 120,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      }
+    },
+    "relationshipEntities": {
+      "r001": {
+        "id": "r001",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t001",
+          "columnIds": [
+            "c001"
+          ],
+          "x": 985,
+          "y": 287,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t002",
+          "columnIds": [
+            "c010"
+          ],
+          "x": 1180,
+          "y": 74,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656242,
+          "createAt": 1774632656242
+        }
+      },
+      "r002": {
+        "id": "r002",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t001",
+          "columnIds": [
+            "c001"
+          ],
+          "x": 985,
+          "y": 315,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t003",
+          "columnIds": [
+            "c018"
+          ],
+          "x": 1181.6393,
+          "y": 569.3333333333333,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r003": {
+        "id": "r003",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t001",
+          "columnIds": [
+            "c001"
+          ],
+          "x": 985,
+          "y": 301,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t004",
+          "columnIds": [
+            "c025"
+          ],
+          "x": 1840,
+          "y": 215,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r004": {
+        "id": "r004",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t001",
+          "columnIds": [
+            "c001"
+          ],
+          "x": 985,
+          "y": 329,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t005",
+          "columnIds": [
+            "c040"
+          ],
+          "x": 1180,
+          "y": 1088,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r005": {
+        "id": "r005",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t001",
+          "columnIds": [
+            "c001"
+          ],
+          "x": 620,
+          "y": 308,
+          "direction": 1
+        },
+        "end": {
+          "tableId": "t007",
+          "columnIds": [
+            "c045"
+          ],
+          "x": 425,
+          "y": 714,
+          "direction": 2
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r006": {
+        "id": "r006",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t001",
+          "columnIds": [
+            "c001"
+          ],
+          "x": 802.5,
+          "y": 336,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "t009",
+          "columnIds": [
+            "c059"
+          ],
+          "x": 810.5,
+          "y": 980,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r007": {
+        "id": "r007",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t002",
+          "columnIds": [
+            "c009"
+          ],
+          "x": 1545,
+          "y": 74,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t004",
+          "columnIds": [
+            "c026"
+          ],
+          "x": 1840,
+          "y": 187,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r008": {
+        "id": "r008",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t002",
+          "columnIds": [
+            "c009"
+          ],
+          "x": 1545,
+          "y": 102,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t004",
+          "columnIds": [
+            "c028"
+          ],
+          "x": 1840,
+          "y": 201,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r009": {
+        "id": "r009",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t003",
+          "columnIds": [
+            "c017"
+          ],
+          "x": 1546.6393,
+          "y": 574,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t004",
+          "columnIds": [
+            "c027"
+          ],
+          "x": 1840,
+          "y": 229,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r010": {
+        "id": "r010",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t003",
+          "columnIds": [
+            "c017"
+          ],
+          "x": 1526.6393,
+          "y": 560,
+          "direction": 4
+        },
+        "end": {
+          "tableId": "t003",
+          "columnIds": [
+            "c022"
+          ],
+          "x": 1546.6393,
+          "y": 602,
+          "direction": 2
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r011": {
+        "id": "r011",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t003",
+          "columnIds": [
+            "c017"
+          ],
+          "x": 1181.6393,
+          "y": 587.9999999999999,
+          "direction": 1
+        },
+        "end": {
+          "tableId": "t007",
+          "columnIds": [
+            "c046"
+          ],
+          "x": 425,
+          "y": 742,
+          "direction": 2
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r012": {
+        "id": "r012",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t003",
+          "columnIds": [
+            "c017"
+          ],
+          "x": 1181.6393,
+          "y": 606.6666666666665,
+          "direction": 1
+        },
+        "end": {
+          "tableId": "t009",
+          "columnIds": [
+            "c061"
+          ],
+          "x": 1001,
+          "y": 1022,
+          "direction": 2
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r013": {
+        "id": "r013",
+        "identification": false,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t002",
+          "columnIds": [
+            "c009"
+          ],
+          "x": 1180,
+          "y": 102,
+          "direction": 1
+        },
+        "end": {
+          "tableId": "t009",
+          "columnIds": [
+            "c060"
+          ],
+          "x": 1001,
+          "y": 994,
+          "direction": 2
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r014": {
+        "id": "r014",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t004",
+          "columnIds": [
+            "c024"
+          ],
+          "x": 2022.5,
+          "y": 236,
+          "direction": 8
+        },
+        "end": {
+          "tableId": "t006",
+          "columnIds": [
+            "c042"
+          ],
+          "x": 2022.5,
+          "y": 860,
+          "direction": 4
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      },
+      "r015": {
+        "id": "r015",
+        "identification": true,
+        "relationshipType": 4,
+        "startRelationshipType": 2,
+        "start": {
+          "tableId": "t005",
+          "columnIds": [
+            "c039"
+          ],
+          "x": 1545,
+          "y": 1088,
+          "direction": 2
+        },
+        "end": {
+          "tableId": "t006",
+          "columnIds": [
+            "c043"
+          ],
+          "x": 1840,
+          "y": 888,
+          "direction": 1
+        },
+        "meta": {
+          "updateAt": 1774632656243,
+          "createAt": 1774632656243
+        }
+      }
+    },
+    "indexEntities": {},
+    "indexColumnEntities": {},
+    "memoEntities": {}
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv add:*)",
+      "Bash(docker compose:*)",
+      "Bash(.venv/Scripts/python -m alembic revision --autogenerate -m \"initial schema\")",
+      "Bash(.venv/Scripts/python -m alembic upgrade head)",
+      "Bash(cd:*)"
+    ]
+  }
+}
