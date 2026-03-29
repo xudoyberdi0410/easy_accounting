@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 
 from aiogram import Router, F
@@ -198,15 +199,12 @@ async def _ask_next_suggestion(message: Message, state: FSMContext) -> None:
 
     if not suggestions:
         # No more suggestions — proceed to missing fields / confirmation
-        parsed_dict = data["parsed_txn"]
         # We can't easily call _ask_missing_fields here without session/user,
         # so go straight to confirmation state
         await state.set_state(AITransaction.confirm)
         # We'll rely on the confirm handler to finalize
         # For now, send a "processing" message; the confirm state handles it
-        await message.edit_text(
-            "⏳ Processing...",
-        )
+        await message.edit_text("⏳ Processing...")
         return
 
     current = suggestions[0]
@@ -244,18 +242,35 @@ async def _ask_missing_fields(
 
     if not parsed_dict.get("account_id"):
         await state.set_state(AITransaction.missing_account)
+        kb = account_select_kb(ctx["accounts"], prefix="ai_acc")
+        # Add a "Create new" button
+        kb.inline_keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text="➕ Create new account", callback_data="ai_acc:new"
+                )
+            ]
+        )
         await message.edit_text(
             "From which account?",
-            reply_markup=account_select_kb(ctx["accounts"], prefix="ai_acc"),
+            reply_markup=kb,
         )
         return True
 
     if parsed_dict.get("type") == "transfer" and not parsed_dict.get("to_account_id"):
         await state.set_state(AITransaction.missing_to_account)
         remaining = [a for a in ctx["accounts"] if a.id != parsed_dict["account_id"]]
+        kb = account_select_kb(remaining, prefix="ai_to_acc")
+        kb.inline_keyboard.append(
+            [
+                InlineKeyboardButton(
+                    text="➕ Create new account", callback_data="ai_to_acc:new"
+                )
+            ]
+        )
         await message.edit_text(
             "To which account?",
-            reply_markup=account_select_kb(remaining, prefix="ai_to_acc"),
+            reply_markup=kb,
         )
         return True
 
@@ -271,9 +286,17 @@ async def _ask_missing_fields(
         matched = [c for c in ctx["categories"] if c.type == cat_type]
         if matched:
             await state.set_state(AITransaction.missing_category)
+            kb = category_select_kb(matched, prefix="ai_cat")
+            kb.inline_keyboard.append(
+                [
+                    InlineKeyboardButton(
+                        text="➕ Create new category", callback_data="ai_cat:new"
+                    )
+                ]
+            )
             await message.edit_text(
                 "Which category?",
-                reply_markup=category_select_kb(matched, prefix="ai_cat"),
+                reply_markup=kb,
             )
             return True
 
@@ -488,6 +511,7 @@ async def handle_qa_answer(
 
     ai_resp = await ai_service.reparse_with_answers(
         original_input=data.get("original_input"),
+        current_data=data.get("parsed_txn"),
         qa_pairs=qa_pairs,
         accounts_data=ctx["accounts_data"],
         categories_data=ctx["categories_data"],
@@ -538,9 +562,15 @@ async def handle_create_entity_yes(
                 currency=currency,
                 account_type=acc_type,
             )
-            await session.commit()
             # Auto-assign to transaction
-            parsed_dict["account_id"] = new_acc.id
+            if (
+                parsed_dict.get("type") == "transfer"
+                and parsed_dict.get("account_id")
+                and not parsed_dict.get("to_account_id")
+            ):
+                parsed_dict["to_account_id"] = new_acc.id
+            else:
+                parsed_dict["account_id"] = new_acc.id
             await state.update_data(parsed_txn=parsed_dict)
             await cb.answer(f"Created account: {name}")
 
@@ -600,6 +630,47 @@ async def handle_create_entity_no(
 # ── Missing Field Handlers ──────────────────────────────────────────────────
 
 
+@router.callback_query(AITransaction.missing_account, F.data == "ai_acc:new")
+async def handle_create_new_account(
+    cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
+) -> None:
+    """Auto-create a new account based on transaction context."""
+    data = await state.get_data()
+    parsed_dict = data["parsed_txn"]
+    currency = parsed_dict.get("currency") or user.default_currency
+    original = data.get("original_input", "")
+
+    # Try to detect card type from original input
+    original_lower = (original or "").lower()
+    if any(
+        kw in original_lower for kw in ["visa", "mastercard", "humo", "uzcard", "карт"]
+    ):
+        acc_type = AccountType.CARD
+        # Try to extract card number
+        import re
+
+        match = re.search(r"[*]\s*(\d{4})", original or "")
+        name = f"Card *{match.group(1)}" if match else f"Card ({currency})"
+    else:
+        acc_type = AccountType.OTHER
+        name = f"Account ({currency})"
+
+    svc = AccountService(session)
+    new_acc = await svc.create(
+        user_id=user.id,
+        name=name,
+        currency=currency,
+        account_type=acc_type,
+    )
+    parsed_dict["account_id"] = new_acc.id
+    await state.update_data(parsed_txn=parsed_dict)
+    await cb.answer(f"Created: {name}")
+
+    if await _ask_missing_fields(cb.message, state, session, user, parsed_dict):
+        return
+    await _show_confirmation(cb.message, state, session, user, parsed_dict)
+
+
 @router.callback_query(AITransaction.missing_account, F.data.startswith("ai_acc:"))
 async def handle_missing_account(
     cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
@@ -614,6 +685,31 @@ async def handle_missing_account(
         return
     await _show_confirmation(cb.message, state, session, user, parsed_dict)
     await cb.answer()
+
+
+@router.callback_query(AITransaction.missing_to_account, F.data == "ai_to_acc:new")
+async def handle_create_new_to_account(
+    cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
+) -> None:
+    data = await state.get_data()
+    parsed_dict = data["parsed_txn"]
+    currency = parsed_dict.get("currency") or user.default_currency
+    name = f"Account ({currency})"
+
+    svc = AccountService(session)
+    new_acc = await svc.create(
+        user_id=user.id,
+        name=name,
+        currency=currency,
+        account_type=AccountType.OTHER,
+    )
+    parsed_dict["to_account_id"] = new_acc.id
+    await state.update_data(parsed_txn=parsed_dict)
+    await cb.answer(f"Created: {name}")
+
+    if await _ask_missing_fields(cb.message, state, session, user, parsed_dict):
+        return
+    await _show_confirmation(cb.message, state, session, user, parsed_dict)
 
 
 @router.callback_query(
@@ -634,6 +730,28 @@ async def handle_missing_to_account(
     await cb.answer()
 
 
+@router.callback_query(AITransaction.missing_category, F.data == "ai_cat:new")
+async def handle_create_new_category(
+    cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
+) -> None:
+    data = await state.get_data()
+    parsed_dict = data["parsed_txn"]
+    cat_type = (
+        CategoryType.INCOME
+        if parsed_dict.get("type") == "income"
+        else CategoryType.EXPENSE
+    )
+    note = parsed_dict.get("note") or "New"
+    name = note[:64]
+
+    svc = CategoryService(session)
+    new_cat = await svc.create(user_id=user.id, name=name, category_type=cat_type)
+    parsed_dict["category_id"] = new_cat.id
+    await state.update_data(parsed_txn=parsed_dict)
+    await cb.answer(f"Created: {name}")
+    await _show_confirmation(cb.message, state, session, user, parsed_dict)
+
+
 @router.callback_query(AITransaction.missing_category, F.data.startswith("ai_cat:"))
 async def handle_missing_category(
     cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
@@ -646,6 +764,52 @@ async def handle_missing_category(
     await state.update_data(parsed_txn=parsed_dict)
     await _show_confirmation(cb.message, state, session, user, parsed_dict)
     await cb.answer()
+
+
+# Text handlers for missing fields — let user type corrections naturally
+
+
+@router.message(AITransaction.confirm_create_entity, F.text)
+@router.message(AITransaction.missing_account, F.text)
+@router.message(AITransaction.missing_to_account, F.text)
+@router.message(AITransaction.missing_category, F.text)
+async def handle_missing_field_text(
+    message: Message, state: FSMContext, session: AsyncSession, user: User
+) -> None:
+    """User typed text in a missing field state — treat as a correction."""
+    data = await state.get_data()
+    parsed_dict = data["parsed_txn"]
+    wait_msg = await message.answer("⏳ Processing...")
+
+    ctx = await _get_context(session, user)
+
+    current_state = await state.get_state()
+    state_context = ""
+    if current_state == AITransaction.missing_account.state:
+        state_context = "The bot just asked 'From which account?' to fill the missing account_id. If they want to create a new one, suggest an ACCOUNT."
+    elif current_state == AITransaction.missing_to_account.state:
+        state_context = "The bot just asked 'To which account?' to fill the missing to_account_id. If they want to create a new one, suggest an ACCOUNT."
+    elif current_state == AITransaction.missing_category.state:
+        state_context = "The bot just asked 'Which category?' to fill the missing category_id. If they want to create a new one, suggest a CATEGORY."
+    elif current_state == AITransaction.confirm_create_entity.state:
+        state_context = "The bot just suggested creating an entity. The user is replying with a correction."
+
+    ai_resp = await ai_service.correct_transaction(
+        current_data=parsed_dict,
+        correction_text=message.text,
+        accounts_data=ctx["accounts_data"],
+        categories_data=ctx["categories_data"],
+        state_context=state_context,
+    )
+
+    if not ai_resp:
+        await wait_msg.edit_text(
+            "❌ Could not understand. Please select from the buttons or try again."
+        )
+        return
+
+    ai_resp.questions = []
+    await _handle_ai_response(wait_msg, state, session, user, ai_resp)
 
 
 # ── Confirmation ─────────────────────────────────────────────────────────────

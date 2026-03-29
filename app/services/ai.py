@@ -65,7 +65,8 @@ class AIResponse(BaseModel):
         description=(
             "Suggest creating new entities when NONE of the provided ones match well. "
             "For example: suggest a new 'card' account for 'VISA *6730' if no card accounts exist, "
-            "or a new category 'Freelance' if no matching category exists."
+            "or a new category 'Freelance' if no matching category exists. "
+            "CRITICAL: NEVER suggest creating a generic 'Cash' account or use 'Cash' as a fallback."
         ),
     )
     detected_merchant: Optional[str] = Field(
@@ -84,11 +85,14 @@ CRITICAL RULES:
 match ONLY to 'card'-type accounts. NEVER pick a 'cash' account for a card transaction.
    - If no suitable account exists, leave account_id as null and add a suggestion \
 to create a new account with the correct type.
+   - When suggesting a new card account, the `name` MUST BE the card's actual name (e.g., 'VISA *6730' or 'Humo') \
+and `extra` MUST BE 'card'.
+   - ABSOLUTE PROHIBITION: NEVER suggest creating a 'Cash', 'Default Cash', or generic account for a card transaction. Do not use 'Cash' as a fallback!
 2. ASKING QUESTIONS: If you see an unknown merchant, location, or abbreviation that \
 you cannot confidently categorize, add a question asking the user what it is. \
 Do NOT guess blindly.
 3. SUGGESTING ENTITIES: If none of the provided categories/accounts/tags fit, \
-suggest creating a new one with a sensible name.
+suggest creating a new one with a sensible name (e.g., suggest a new category 'Freelance' if they mention freelance).
 4. If the user's message is a forwarded bank notification, parse the amount, \
 card info, merchant, date, and transaction type carefully.
 5. PATTERNS: Look at RECENT TRANSACTIONS to learn the user's habits. \
@@ -174,6 +178,7 @@ class GeminiService:
     async def reparse_with_answers(
         self,
         original_input: str | None,
+        current_data: dict,
         qa_pairs: list[dict],
         accounts_data: list[dict],
         categories_data: list[dict],
@@ -187,13 +192,21 @@ class GeminiService:
         context = self._build_context(
             accounts_data, categories_data, recent_transactions_data, patterns_data
         )
+        current_str = json.dumps(current_data, ensure_ascii=False)
         qa_str = "\n".join(f"Q: {qa['question']}\nA: {qa['answer']}" for qa in qa_pairs)
         prompt = (
             f"{context}"
             f"ORIGINAL USER INPUT:\n{original_input or '<attached file>'}\n\n"
+            f"=== PREVIOUSLY PARSED DATA ===\n{current_str}\n\n"
             f"=== Q&A CLARIFICATIONS ===\n{qa_str}\n\n"
-            "Now re-parse the transaction using the original input AND the user's answers above. "
-            "You should have fewer questions now. Apply everything the user told you."
+            "INSTRUCTIONS:\n"
+            "1. You previously parsed the transaction but had missing information. "
+            "You MUST keep all fields you successfully extracted in PREVIOUSLY PARSED DATA "
+            "(like amount, type, account_id, currency, date, etc.).\n"
+            "2. Apply the new information from Q&A CLARIFICATIONS to fill in the missing gaps "
+            "(e.g., matching a category or suggesting a new one).\n"
+            "3. If the user asks to create an entity, add an appropriate suggestion to the `suggestions` list.\n"
+            "4. Return the FULL updated transaction object."
         )
 
         try:
@@ -219,6 +232,7 @@ class GeminiService:
         correction_text: str,
         accounts_data: list[dict],
         categories_data: list[dict],
+        state_context: str | None = None,
     ) -> Optional[AIResponse]:
         """Apply a user's correction to an already-parsed transaction."""
         if not self.client:
@@ -229,15 +243,22 @@ class GeminiService:
         categories_str = json.dumps(categories_data, ensure_ascii=False)
 
         prompt = (
-            "The user previously provided a transaction and I parsed it into the JSON below. "
-            "Now the user wants to correct something.\n\n"
-            f"=== CURRENT PARSED TRANSACTION ===\n{current_str}\n\n"
+            "The user previously provided a transaction and it was parsed into the structured data below. "
+            "Now they mapped it to a correction. You must output a new AIResponse.\n\n"
+            f"=== CURRENT TRANSACTION DATA ===\n{current_str}\n\n"
             f"=== AVAILABLE ACCOUNTS ===\n{accounts_str}\n\n"
             f"=== AVAILABLE CATEGORIES ===\n{categories_str}\n\n"
             f"=== USER CORRECTION ===\n{correction_text}\n\n"
-            "Apply the user's correction and return the FULL updated transaction. "
-            "Only change the fields the user mentioned; keep everything else the same. "
-            "Clear the questions list since this is a correction."
+            f"{f'=== BOT CONTEXT ==={chr(10)}{state_context}{chr(10)}{chr(10)}' if state_context else ''}"
+            "INSTRUCTIONS:\n"
+            "1. Output the FULL updated transaction object. You MUST copy over all the existing fields "
+            "(amount, type, etc.) EXACTLY as they are in the CURRENT TRANSACTION DATA, except for "
+            "what the user explicitly explicitly asks to change.\n"
+            "2. If the user asks to 'create a new one' or similar for an account or category, "
+            "add an appropriate suggestion to the `suggestions` list (matching the context of what the bot just asked). "
+            "If they do not provide a specific name, use a generic descriptive name "
+            "(e.g. 'New Account', 'New Savings Account', 'New Category').\n"
+            "3. Do not ask any more questions in the `questions` list."
         )
 
         try:
