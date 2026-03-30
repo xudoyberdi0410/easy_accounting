@@ -12,96 +12,109 @@ from app.config import settings
 
 
 class ParsedTransaction(BaseModel):
-    amount: Optional[float] = Field(
-        None, description="The numeric amount of the transaction"
-    )
-    currency: Optional[str] = Field(
-        None, description="Currency code (e.g. USD, RUB, EUR, UZS)"
-    )
+    amount: Optional[float] = Field(None, description="Numeric amount")
+    currency: Optional[str] = Field(None, description="Currency code (USD, UZS, etc.)")
     category_id: Optional[int] = Field(
-        None,
-        description="ID of the best matching category from CATEGORIES list. Null if uncertain or no match.",
+        None, description="ID of matching category from CATEGORIES. Null if none match."
     )
     account_id: Optional[int] = Field(
-        None,
-        description="ID of the best matching account from ACCOUNTS list. Null if uncertain or no match.",
+        None, description="ID of matching account from ACCOUNTS. Null if none match."
     )
     to_account_id: Optional[int] = Field(
-        None,
-        description="ID of destination account (only for transfers). Null otherwise.",
+        None, description="Destination account ID (transfers only)."
     )
     type: Optional[str] = Field(
-        None, description="One of: 'income', 'expense', 'transfer'. Null if uncertain."
+        None, description="One of: 'income', 'expense', 'transfer'."
     )
-    note: Optional[str] = Field(
-        None, description="Brief note, merchant name, or summary."
-    )
+    note: Optional[str] = Field(None, description="Brief note or merchant name.")
 
 
 class EntitySuggestion(BaseModel):
-    entity_type: str = Field(description="One of: 'account', 'category', 'tag'")
+    entity_type: str = Field(description="'account' or 'category'")
     name: str = Field(description="Suggested name for the new entity")
     extra: Optional[str] = Field(
         None,
-        description="Extra detail: for account — the account type (cash/card/savings/crypto/other); "
-        "for category — 'income' or 'expense'; for tag — null.",
+        description="For account: type (cash/card/savings/crypto/other). "
+        "For category: 'income' or 'expense'.",
     )
     reason: str = Field(description="Short reason why this entity should be created")
 
 
 class AIResponse(BaseModel):
-    transaction: ParsedTransaction = Field(description="The parsed transaction data")
-    questions: list[str] = Field(
-        default_factory=list,
-        description=(
-            "Questions to ask the user when you are UNCERTAIN about something. "
-            "Examples: 'What is ELEKSIR S03 T19 SHL?', "
-            "'Is this income from freelance or salary?'. "
-            "Do NOT ask about fields you are confident about."
-        ),
-    )
+    transaction: ParsedTransaction = Field(description="Parsed transaction data")
     suggestions: list[EntitySuggestion] = Field(
         default_factory=list,
         description=(
-            "Suggest creating new entities when NONE of the provided ones match well. "
-            "For example: suggest a new 'card' account for 'VISA *6730' if no card accounts exist, "
-            "or a new category 'Freelance' if no matching category exists. "
-            "CRITICAL: NEVER suggest creating a generic 'Cash' account or use 'Cash' as a fallback."
+            "Entities to create for missing fields. "
+            "ALWAYS suggest when no existing account/category matches. "
+            "For cards: name='VISA *6730', extra='card'. "
+            "For unknown merchants: suggest a category with a reasonable name."
         ),
     )
     detected_merchant: Optional[str] = Field(
-        None,
-        description="Detected merchant/sender name (e.g. 'ELEKSIR S03 T19 SHL') for pattern learning. Null if N/A.",
+        None, description="Merchant/sender name for pattern learning."
     )
 
 
 SYSTEM_PROMPT = """\
-You are a smart financial assistant that parses user messages, voice transcripts, \
-receipt photos, and forwarded bank notifications into structured transactions.
+You are a smart financial assistant inside a Telegram bot. You parse user messages, \
+voice transcripts, receipt photos, and forwarded bank notifications into structured transactions.
 
 CRITICAL RULES:
-1. MATCHING ACCOUNTS: Look at the account TYPE carefully.
-   - If the message mentions a card (VISA, MasterCard, Humo, UzCard, etc.), \
-match ONLY to 'card'-type accounts. NEVER pick a 'cash' account for a card transaction.
-   - If no suitable account exists, leave account_id as null and add a suggestion \
-to create a new account with the correct type.
-   - When suggesting a new card account, the `name` MUST BE the card's actual name (e.g., 'VISA *6730' or 'Humo') \
-and `extra` MUST BE 'card'.
-   - ABSOLUTE PROHIBITION: NEVER suggest creating a 'Cash', 'Default Cash', or generic account for a card transaction. Do not use 'Cash' as a fallback!
-2. ASKING QUESTIONS: If you see an unknown merchant, location, or abbreviation that \
-you cannot confidently categorize, add a question asking the user what it is. \
-Do NOT guess blindly.
-3. SUGGESTING ENTITIES: If none of the provided categories/accounts/tags fit, \
-suggest creating a new one with a sensible name (e.g., suggest a new category 'Freelance' if they mention freelance).
-4. If the user's message is a forwarded bank notification, parse the amount, \
-card info, merchant, date, and transaction type carefully.
-5. PATTERNS: Look at RECENT TRANSACTIONS to learn the user's habits. \
-If the same merchant appeared before with a specific category, reuse that category.
-6. Use the user's KNOWN PATTERNS — these are explicit rules the user has confirmed. \
-Always apply them when the pattern matches.
 
-Return your response as structured JSON following the schema exactly.\
+1. BE DECISIVE. NEVER ask clarifying questions. Make your best guess for every field. \
+The user can correct later if needed.
+
+2. ACCOUNT MATCHING:
+   - Match by account TYPE: card transactions → card accounts ONLY.
+   - If the message mentions a card (VISA, MasterCard, Humo, UzCard, etc.) and NO \
+matching card account exists → ALWAYS add a suggestion to create one.
+   - Card account name MUST include the card identifier (e.g. "VISA *6730", "Humo *1234").
+   - Card account extra MUST be "card".
+   - NEVER use a cash account for a card transaction. NEVER suggest generic accounts.
+
+3. CATEGORY MATCHING — THIS IS CRITICAL:
+   - Pick the closest matching category from CATEGORIES list.
+   - If NOTHING fits well → ALWAYS suggest creating a new category with a SPECIFIC, \
+descriptive name based on context (e.g. "Freelance", "Groceries", "Taxi", "Salary").
+   - NEVER pick a generic "Other Income" or "Other Expense" category as a fallback. \
+If no good match exists, SUGGEST a new specific category instead.
+   - For income: extra="income". For expense: extra="expense".
+
+4. TRANSACTION TYPE — THIS IS CRITICAL:
+   - "transfer" means moving money between the USER'S OWN accounts. \
+ONLY use "transfer" when both source and destination are the user's accounts.
+   - Payments to OTHER PEOPLE (P2P transfers, purchases from sellers, payments to \
+"Aksarov Davir", "Иванов", etc.) are ALWAYS "expense", NOT "transfer".
+   - Screenshots showing a payment confirmation with a recipient name = expense.
+   - When in doubt between transfer and expense, choose EXPENSE.
+
+5. ALWAYS FILL FIELDS:
+   - amount, currency, type — extract from the message, NEVER leave null if present.
+   - note — use the user's description if provided (e.g. "bought 2 HDDs"), \
+otherwise use merchant/recipient name. ALWAYS prefer user's own description over raw data.
+   - account_id — match or suggest. NEVER leave null without a suggestion.
+   - category_id — match or suggest. NEVER leave null without a suggestion (except transfers).
+
+6. FORWARDED BANK NOTIFICATIONS: Parse amount, card info, merchant, date, type carefully. \
+"Пополнение" = income, "Оплата"/"Списание" = expense, "Перевод" = transfer between own accounts only.
+
+7. PATTERNS: Use RECENT TRANSACTIONS and KNOWN PATTERNS to match categories and accounts. \
+If the same merchant appeared before with a specific category, reuse it.
+
+8. CORRECTIONS: When the user corrects something, update ONLY the mentioned field. \
+Keep ALL other fields exactly as provided in CURRENT TRANSACTION DATA. \
+NEVER reset fields to null that already have values.
+
+9. CONVERSATION CONTINUITY: You have full conversation history. Use it for context. \
+When the user sends both text AND a photo/screenshot, the text describes the PURPOSE \
+of the transaction — use it for the note and to determine the category.
+
+Return structured JSON following the schema exactly.\
 """
+
+# Serializable conversation history for FSM state
+ConversationHistory = list[dict[str, str]]
 
 
 class GeminiService:
@@ -112,27 +125,55 @@ class GeminiService:
         else:
             self.client = None
 
+    @staticmethod
     def _build_context(
-        self,
         accounts_data: list[dict],
         categories_data: list[dict],
         recent_transactions_data: list[dict],
         patterns_data: list[dict] | None = None,
     ) -> str:
-        accounts_str = json.dumps(accounts_data, ensure_ascii=False)
-        categories_str = json.dumps(categories_data, ensure_ascii=False)
-        history_str = json.dumps(recent_transactions_data, ensure_ascii=False)
         ctx = (
-            f"=== ACCOUNTS ===\n{accounts_str}\n\n"
-            f"=== CATEGORIES ===\n{categories_str}\n\n"
-            f"=== RECENT TRANSACTIONS (learn habits) ===\n{history_str}\n\n"
+            f"=== ACCOUNTS ===\n{json.dumps(accounts_data, ensure_ascii=False)}\n\n"
+            f"=== CATEGORIES ===\n{json.dumps(categories_data, ensure_ascii=False)}\n\n"
+            f"=== RECENT TRANSACTIONS ===\n{json.dumps(recent_transactions_data, ensure_ascii=False)}\n\n"
         )
         if patterns_data:
-            patterns_str = json.dumps(patterns_data, ensure_ascii=False)
-            ctx += f"=== KNOWN PATTERNS (always apply these) ===\n{patterns_str}\n\n"
+            ctx += f"=== KNOWN PATTERNS ===\n{json.dumps(patterns_data, ensure_ascii=False)}\n\n"
         return ctx
 
-    async def parse_transaction(
+    @staticmethod
+    def _history_to_contents(history: ConversationHistory) -> list[types.Content]:
+        contents = []
+        for entry in history:
+            parts = []
+            if entry.get("text"):
+                parts.append(types.Part.from_text(text=entry["text"]))
+            if entry.get("file_bytes_hex") and entry.get("mime_type"):
+                parts.append(
+                    types.Part.from_bytes(
+                        data=bytes.fromhex(entry["file_bytes_hex"]),
+                        mime_type=entry["mime_type"],
+                    )
+                )
+            if parts:
+                contents.append(types.Content(role=entry["role"], parts=parts))
+        return contents
+
+    async def _call_gemini(self, contents: list[types.Content]) -> Optional[AIResponse]:
+        response = await self.client.aio.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=contents,
+            config=types.GenerateContentConfig(
+                system_instruction=SYSTEM_PROMPT,
+                response_mime_type="application/json",
+                response_schema=AIResponse,
+            ),
+        )
+        if response.text:
+            return AIResponse(**json.loads(response.text))
+        return None
+
+    async def start_parse(
         self,
         text_input: Optional[str],
         accounts_data: list[dict],
@@ -141,139 +182,48 @@ class GeminiService:
         patterns_data: list[dict] | None = None,
         file_bytes: Optional[bytes] = None,
         mime_type: Optional[str] = None,
-    ) -> Optional[AIResponse]:
+    ) -> tuple[Optional[AIResponse], ConversationHistory]:
         if not self.client:
-            return None
+            return None, []
 
         context = self._build_context(
             accounts_data, categories_data, recent_transactions_data, patterns_data
         )
-        prompt = (
-            f"{context}"
-            f"USER INPUT TO PROCESS:\n"
-            f"{text_input or '<See attached file/image>'}"
-        )
+        user_text = f"{context}USER INPUT:\n{text_input or '<See attached file>'}"
 
-        contents = [prompt]
-        if file_bytes and mime_type:
-            contents.append(types.Part.from_bytes(data=file_bytes, mime_type=mime_type))
+        history_entry: dict[str, str] = {"role": "user", "text": user_text}
+        if file_bytes and mime_type and len(file_bytes) <= 512_000:
+            history_entry["file_bytes_hex"] = file_bytes.hex()
+            history_entry["mime_type"] = mime_type
+
+        history: ConversationHistory = [history_entry]
+        contents = self._history_to_contents(history)
 
         try:
-            response = await self.client.aio.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    response_schema=AIResponse,
-                ),
-            )
-            if response.text:
-                return AIResponse(**json.loads(response.text))
-            return None
+            ai_resp = await self._call_gemini(contents)
+            if ai_resp:
+                history.append({"role": "model", "text": ai_resp.model_dump_json()})
+            return ai_resp, history
         except Exception as e:
             print(f"Gemini API Error: {e}")
-            return None
+            return None, history
 
-    async def reparse_with_answers(
+    async def continue_conversation(
         self,
-        original_input: str | None,
-        current_data: dict,
-        qa_pairs: list[dict],
-        accounts_data: list[dict],
-        categories_data: list[dict],
-        recent_transactions_data: list[dict],
-        patterns_data: list[dict] | None = None,
-    ) -> Optional[AIResponse]:
-        """Re-parse the transaction after user answered AI questions."""
+        history: ConversationHistory,
+        user_message: str,
+    ) -> tuple[Optional[AIResponse], ConversationHistory]:
         if not self.client:
-            return None
+            return None, history
 
-        context = self._build_context(
-            accounts_data, categories_data, recent_transactions_data, patterns_data
-        )
-        current_str = json.dumps(current_data, ensure_ascii=False)
-        qa_str = "\n".join(f"Q: {qa['question']}\nA: {qa['answer']}" for qa in qa_pairs)
-        prompt = (
-            f"{context}"
-            f"ORIGINAL USER INPUT:\n{original_input or '<attached file>'}\n\n"
-            f"=== PREVIOUSLY PARSED DATA ===\n{current_str}\n\n"
-            f"=== Q&A CLARIFICATIONS ===\n{qa_str}\n\n"
-            "INSTRUCTIONS:\n"
-            "1. You previously parsed the transaction but had missing information. "
-            "You MUST keep all fields you successfully extracted in PREVIOUSLY PARSED DATA "
-            "(like amount, type, account_id, currency, date, etc.).\n"
-            "2. Apply the new information from Q&A CLARIFICATIONS to fill in the missing gaps "
-            "(e.g., matching a category or suggesting a new one).\n"
-            "3. If the user asks to create an entity, add an appropriate suggestion to the `suggestions` list.\n"
-            "4. Return the FULL updated transaction object."
-        )
+        history.append({"role": "user", "text": user_message})
+        contents = self._history_to_contents(history)
 
         try:
-            response = await self.client.aio.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=[prompt],
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    response_schema=AIResponse,
-                ),
-            )
-            if response.text:
-                return AIResponse(**json.loads(response.text))
-            return None
+            ai_resp = await self._call_gemini(contents)
+            if ai_resp:
+                history.append({"role": "model", "text": ai_resp.model_dump_json()})
+            return ai_resp, history
         except Exception as e:
-            print(f"Gemini API Error (reparse): {e}")
-            return None
-
-    async def correct_transaction(
-        self,
-        current_data: dict,
-        correction_text: str,
-        accounts_data: list[dict],
-        categories_data: list[dict],
-        state_context: str | None = None,
-    ) -> Optional[AIResponse]:
-        """Apply a user's correction to an already-parsed transaction."""
-        if not self.client:
-            return None
-
-        current_str = json.dumps(current_data, ensure_ascii=False)
-        accounts_str = json.dumps(accounts_data, ensure_ascii=False)
-        categories_str = json.dumps(categories_data, ensure_ascii=False)
-
-        prompt = (
-            "The user previously provided a transaction and it was parsed into the structured data below. "
-            "Now they mapped it to a correction. You must output a new AIResponse.\n\n"
-            f"=== CURRENT TRANSACTION DATA ===\n{current_str}\n\n"
-            f"=== AVAILABLE ACCOUNTS ===\n{accounts_str}\n\n"
-            f"=== AVAILABLE CATEGORIES ===\n{categories_str}\n\n"
-            f"=== USER CORRECTION ===\n{correction_text}\n\n"
-            f"{f'=== BOT CONTEXT ==={chr(10)}{state_context}{chr(10)}{chr(10)}' if state_context else ''}"
-            "INSTRUCTIONS:\n"
-            "1. Output the FULL updated transaction object. You MUST copy over all the existing fields "
-            "(amount, type, etc.) EXACTLY as they are in the CURRENT TRANSACTION DATA, except for "
-            "what the user explicitly explicitly asks to change.\n"
-            "2. If the user asks to 'create a new one' or similar for an account or category, "
-            "add an appropriate suggestion to the `suggestions` list (matching the context of what the bot just asked). "
-            "If they do not provide a specific name, use a generic descriptive name "
-            "(e.g. 'New Account', 'New Savings Account', 'New Category').\n"
-            "3. Do not ask any more questions in the `questions` list."
-        )
-
-        try:
-            response = await self.client.aio.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=[prompt],
-                config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
-                    response_mime_type="application/json",
-                    response_schema=AIResponse,
-                ),
-            )
-            if response.text:
-                return AIResponse(**json.loads(response.text))
-            return None
-        except Exception as e:
-            print(f"Gemini API Error (correction): {e}")
-            return None
+            print(f"Gemini API Error (continue): {e}")
+            return None, history

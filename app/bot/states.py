@@ -39,15 +39,9 @@ class RenameAccount(StatesGroup):
 
 
 class AITransaction(StatesGroup):
-    # Q&A loop: AI asks questions, user answers
-    answering_question = State()
-    # Inline entity creation (account / category / tag)
-    confirm_create_entity = State()
-    # Final confirmation: user sees parsed data, can confirm / cancel / correct
-    confirm = State()
-    # After save: offer to remember a pattern
-    confirm_pattern = State()
-    # Fallback: manual field selection
-    missing_account = State()
-    missing_category = State()
-    missing_to_account = State()
+    suggest_entity = State()       # AI suggests creating an entity
+    select_account = State()       # fallback: pick account from list
+    select_category = State()      # fallback: pick category from list
+    select_to_account = State()    # fallback: pick destination account
+    confirm = State()              # final confirmation
+    confirm_pattern = State()      # offer to save merchant pattern
