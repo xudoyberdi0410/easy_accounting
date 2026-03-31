@@ -47,7 +47,7 @@ class AIResponse(BaseModel):
         description=(
             "Entities to create for missing fields. "
             "ALWAYS suggest when no existing account/category matches. "
-            "For cards: name='VISA *6730', extra='card'. "
+            "For cards: use the exact identifier from the message, e.g. name='Card *0583', extra='card'. "
             "For unknown merchants: suggest a category with a reasonable name."
         ),
     )
@@ -65,13 +65,17 @@ CRITICAL RULES:
 1. BE DECISIVE. NEVER ask clarifying questions. Make your best guess for every field. \
 The user can correct later if needed.
 
-2. ACCOUNT MATCHING:
-   - Match by account TYPE: card transactions → card accounts ONLY.
-   - If the message mentions a card (VISA, MasterCard, Humo, UzCard, etc.) and NO \
-matching card account exists → ALWAYS add a suggestion to create one.
-   - Card account name MUST include the card identifier (e.g. "VISA *6730", "Humo *1234").
-   - Card account extra MUST be "card".
-   - NEVER use a cash account for a card transaction. NEVER suggest generic accounts.
+2. ACCOUNT MATCHING — THIS IS CRITICAL:
+   - When the message contains an account/card identifier (e.g. ***0583, *6730, ****1234), \
+you MUST match by those LAST DIGITS. Find an account in ACCOUNTS whose name contains \
+the same digits (e.g. "*0583", "*6730").
+   - If NO account in ACCOUNTS matches the identifier → set account_id to null AND \
+ALWAYS add a suggestion to create a new account. Use the identifier in the name \
+(e.g. "Card *0583"). Set extra to "card" if it's a card, otherwise pick the right type.
+   - NEVER assign an account whose identifier doesn't match. "VISA *6730" does NOT \
+match ***0583 — they are different accounts!
+   - If the message has no identifier, match by type and context as best you can.
+   - NEVER leave account_id null without a suggestion.
 
 3. CATEGORY MATCHING — THIS IS CRITICAL:
    - Pick the closest matching category from CATEGORIES list.
@@ -102,9 +106,14 @@ otherwise use merchant/recipient name. ALWAYS prefer user's own description over
 7. PATTERNS: Use RECENT TRANSACTIONS and KNOWN PATTERNS to match categories and accounts. \
 If the same merchant appeared before with a specific category, reuse it.
 
-8. CORRECTIONS: When the user corrects something, update ONLY the mentioned field. \
-Keep ALL other fields exactly as provided in CURRENT TRANSACTION DATA. \
-NEVER reset fields to null that already have values.
+8. CORRECTIONS: The user is fixing a SPECIFIC wrong detail. \
+Figure out exactly WHICH part is wrong and fix ONLY that. \
+- If the correction is about a detail in the note (destination, item, person), \
+edit the note text to fix that detail — do NOT replace the entire note. \
+- Do NOT change category, account, type, or amount unless the user EXPLICITLY asks. \
+A destination correction does NOT mean a category change. \
+- Keep ALL other fields exactly as provided in CURRENT TRANSACTION DATA. \
+- NEVER reset fields to null that already have values.
 
 9. CONVERSATION CONTINUITY: You have full conversation history. Use it for context. \
 When the user sends both text AND a photo/screenshot, the text describes the PURPOSE \
@@ -212,11 +221,17 @@ class GeminiService:
         self,
         history: ConversationHistory,
         user_message: str,
+        file_bytes: Optional[bytes] = None,
+        mime_type: Optional[str] = None,
     ) -> tuple[Optional[AIResponse], ConversationHistory]:
         if not self.client:
             return None, history
 
-        history.append({"role": "user", "text": user_message})
+        entry: dict[str, str] = {"role": "user", "text": user_message}
+        if file_bytes and mime_type and len(file_bytes) <= 512_000:
+            entry["file_bytes_hex"] = file_bytes.hex()
+            entry["mime_type"] = mime_type
+        history.append(entry)
         contents = self._history_to_contents(history)
 
         try:

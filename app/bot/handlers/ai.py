@@ -24,7 +24,7 @@ from app.db.models import (
 from app.services.account import AccountService
 from app.services.category import CategoryService
 from app.services.transaction import TransactionService
-from app.services.ai import AIResponse, GeminiService
+from app.services.ai import AIResponse, EntitySuggestion, GeminiService
 from app.repositories.ai_pattern import AIPatternRepository
 from app.bot.keyboards.inline import account_select_kb, category_select_kb
 
@@ -160,6 +160,23 @@ def _merge_parsed(existing: dict, new_data: dict) -> dict:
     return merged
 
 
+def _find_existing_entity(
+    suggestion: EntitySuggestion, ctx: dict, parsed: dict
+) -> dict | None:
+    """Check if a suggested entity already exists. Returns {"field": ..., "id": ...} or None."""
+    name_lower = suggestion.name.lower()
+    if suggestion.entity_type == "category":
+        for c in ctx["categories_data"]:
+            if c["name"].lower() == name_lower:
+                return {"field": "category_id", "id": c["id"]}
+    elif suggestion.entity_type == "account":
+        for a in ctx["accounts_data"]:
+            if a["name"].lower() == name_lower:
+                field = "to_account_id" if parsed.get("account_id") else "account_id"
+                return {"field": field, "id": a["id"]}
+    return None
+
+
 # ── Core Flow ──────────────────────────────────────────────────────────────
 
 
@@ -182,14 +199,24 @@ async def _handle_ai_response(
 
     parsed["source"] = data.get("source", "manual")
 
+    # Filter out suggestions for entities that already exist
+    ctx = await _get_context(session, user)
+    filtered_suggestions = []
+    for s in ai_resp.suggestions:
+        existing = _find_existing_entity(s, ctx, parsed)
+        if existing:
+            parsed[existing["field"]] = existing["id"]
+        else:
+            filtered_suggestions.append(s)
+
     await state.update_data(
         parsed_txn=parsed,
         detected_merchant=ai_resp.detected_merchant or data.get("detected_merchant"),
-        pending_suggestions=[s.model_dump() for s in ai_resp.suggestions],
+        pending_suggestions=[s.model_dump() for s in filtered_suggestions],
     )
 
     # 1. Suggestions first
-    if ai_resp.suggestions:
+    if filtered_suggestions:
         await _show_next_suggestion(message, state)
         return
 
@@ -369,6 +396,8 @@ async def _apply_correction(
     session: AsyncSession,
     user: User,
     correction_text: str,
+    file_bytes: bytes | None = None,
+    mime_type: str | None = None,
 ) -> None:
     """Send user correction to AI and handle the response with data merging."""
     data = await state.get_data()
@@ -385,14 +414,25 @@ async def _apply_correction(
         f"{json.dumps(ctx['accounts_data'], ensure_ascii=False)}\n\n"
         f"=== AVAILABLE CATEGORIES ===\n"
         f"{json.dumps(ctx['categories_data'], ensure_ascii=False)}\n\n"
-        f"User says: {correction_text}\n\n"
-        "Update ONLY what the user mentioned. "
-        "Keep ALL other fields from CURRENT TRANSACTION DATA exactly as they are. "
-        "NEVER set a field to null if it already has a value."
+        f"User correction: {correction_text or '<See attached voice message>'}\n\n"
+        "CORRECTION RULES:\n"
+        "1. The user is correcting SPECIFIC wrong details in the transaction above. "
+        "Figure out WHICH part of the current data is wrong and fix ONLY that part.\n"
+        "2. If the user corrects a detail in the note (e.g. destination, item name), "
+        "update the note text to fix that detail while KEEPING the rest of the note intact. "
+        "Do NOT replace the entire note with just the correction.\n"
+        "3. Do NOT change category, account, type, or amount unless the user EXPLICITLY "
+        "asks to change them. A correction like 'to school, not work' fixes the note, "
+        "NOT the category.\n"
+        "4. NEVER set a field to null if it already has a value.\n"
+        "5. Return ALL fields from CURRENT TRANSACTION DATA, with only the corrected field(s) changed."
     )
 
     ai_resp, conv_history = await ai_service.continue_conversation(
-        history=conv_history, user_message=correction_msg,
+        history=conv_history,
+        user_message=correction_msg,
+        file_bytes=file_bytes,
+        mime_type=mime_type,
     )
     await state.update_data(conv_history=conv_history)
 
@@ -626,6 +666,25 @@ async def handle_text_correction(
 ) -> None:
     """User typed text in any active AI state — treat as correction."""
     await _apply_correction(message, state, session, user, message.text)
+
+
+@router.message(AITransaction.suggest_entity, F.voice)
+@router.message(AITransaction.select_account, F.voice)
+@router.message(AITransaction.select_to_account, F.voice)
+@router.message(AITransaction.select_category, F.voice)
+@router.message(AITransaction.confirm, F.voice)
+async def handle_voice_correction(
+    message: Message, state: FSMContext, session: AsyncSession, user: User
+) -> None:
+    """User sent voice in any active AI state — treat as correction."""
+    file = await message.bot.get_file(message.voice.file_id)
+    result = await message.bot.download_file(file.file_path)
+    await _apply_correction(
+        message, state, session, user,
+        correction_text="",
+        file_bytes=result.read(),
+        mime_type="audio/ogg",
+    )
 
 
 # ── Confirmation ───────────────────────────────────────────────────────────
