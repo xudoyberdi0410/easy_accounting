@@ -56,11 +56,30 @@ class AIResponse(BaseModel):
     )
 
 
+class TransactionSplit(BaseModel):
+    descriptions: list[str] = Field(
+        description=(
+            "List of individual transaction descriptions extracted from the user's message. "
+            "Each description must be a COMPLETE, self-contained sentence with amount, "
+            "payment method, and purpose — resolve references like 'тем же способом' / "
+            "'так же' / 'обратно' into explicit values. "
+            "Most messages contain 1 transaction — return it as-is. "
+            "If the message describes multiple spending events, split them."
+        )
+    )
+
+
 SYSTEM_PROMPT = """\
 You are a smart financial assistant inside a Telegram bot. You parse user messages, \
 voice transcripts, receipt photos, and forwarded bank notifications into structured transactions.
 
 CRITICAL RULES:
+
+0. MULTIPLE TRANSACTIONS: A single message may describe SEVERAL transactions. \
+For example: "доехал на автобусе за 990 с карты, купил булочку за 5к наличными, вернулся домой тем же способом" \
+contains THREE transactions. Extract ALL of them as separate items. \
+"тем же способом" / "так же" / "обратно" means same amount/account/method as a previous transaction — \
+fill in those fields accordingly. NEVER merge distinct spending events into one transaction.
 
 1. BE DECISIVE. NEVER ask clarifying questions. Make your best guess for every field. \
 The user can correct later if needed.
@@ -182,6 +201,33 @@ class GeminiService:
             return AIResponse(**json.loads(response.text))
         return None
 
+    async def _split_transactions(self, user_text: str) -> list[str]:
+        """Ask Gemini to split a message into individual transaction descriptions."""
+        split_prompt = (
+            "You split user messages into individual financial transactions. "
+            "If the message contains only ONE transaction, return it as-is in a single-element list. "
+            "If it contains MULTIPLE transactions, split them into separate complete descriptions. "
+            "IMPORTANT: resolve all references — 'тем же способом', 'так же', 'обратно', "
+            "'the same way' etc. must be expanded into explicit amounts, methods, and accounts "
+            "based on context from earlier in the message. Each description must stand alone."
+        )
+        response = await self.client.aio.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[types.Content(
+                role="user",
+                parts=[types.Part.from_text(text=user_text)],
+            )],
+            config=types.GenerateContentConfig(
+                system_instruction=split_prompt,
+                response_mime_type="application/json",
+                response_schema=TransactionSplit,
+            ),
+        )
+        if response.text:
+            split = TransactionSplit(**json.loads(response.text))
+            return split.descriptions
+        return [user_text]
+
     async def start_parse(
         self,
         text_input: Optional[str],
@@ -216,6 +262,61 @@ class GeminiService:
         except Exception as e:
             print(f"Gemini API Error: {e}")
             return None, history
+
+    async def start_parse_multi(
+        self,
+        text_input: Optional[str],
+        accounts_data: list[dict],
+        categories_data: list[dict],
+        recent_transactions_data: list[dict],
+        patterns_data: list[dict] | None = None,
+        file_bytes: Optional[bytes] = None,
+        mime_type: Optional[str] = None,
+    ) -> tuple[list[AIResponse], ConversationHistory]:
+        """Parse input that may contain multiple transactions.
+
+        Step 1: lightweight split call to detect multiple transactions.
+        Step 2: parse each description with the full AIResponse schema.
+        For single transactions, step 1 is skipped via a fast heuristic.
+        """
+        if not self.client:
+            return [], []
+
+        # For non-text inputs (photos, voice without text), skip splitting
+        if not text_input or file_bytes:
+            resp, history = await self.start_parse(
+                text_input, accounts_data, categories_data,
+                recent_transactions_data, patterns_data, file_bytes, mime_type,
+            )
+            return ([resp] if resp else []), history
+
+        # Step 1: split into individual descriptions
+        try:
+            descriptions = await self._split_transactions(text_input)
+        except Exception as e:
+            print(f"Gemini split error: {e}")
+            descriptions = [text_input]
+
+        if not descriptions:
+            descriptions = [text_input]
+
+        # Step 2: parse each description
+        results: list[AIResponse] = []
+        last_history: ConversationHistory = []
+
+        for desc in descriptions:
+            resp, history = await self.start_parse(
+                text_input=desc,
+                accounts_data=accounts_data,
+                categories_data=categories_data,
+                recent_transactions_data=recent_transactions_data,
+                patterns_data=patterns_data,
+            )
+            if resp:
+                results.append(resp)
+                last_history = history
+
+        return results, last_history
 
     async def continue_conversation(
         self,

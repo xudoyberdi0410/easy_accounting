@@ -314,7 +314,43 @@ async def _show_confirmation(
     await state.update_data(parsed_txn=parsed)
     await state.set_state(AITransaction.confirm)
     text = await _build_confirmation_text(session, user, parsed)
+
+    data = await state.get_data()
+    total = data.get("multi_total", 1)
+    current = data.get("multi_current", 1)
+    if total > 1:
+        text = f"[{current}/{total}] " + text
+
     await message.edit_text(text, reply_markup=_confirm_kb(), parse_mode="HTML")
+
+
+async def _advance_multi_queue(
+    message: Message,
+    state: FSMContext,
+    session: AsyncSession,
+    user: User,
+) -> bool:
+    """Process next queued transaction. Returns True if there was one."""
+    data = await state.get_data()
+    pending = data.get("pending_multi", [])
+    if not pending:
+        return False
+
+    next_item_data = pending.pop(0)
+    current = data.get("multi_current", 1) + 1
+    total = data.get("multi_total", 1)
+    await state.update_data(
+        pending_multi=pending,
+        multi_current=current,
+        parsed_txn={},
+        pending_suggestions=[],
+        detected_merchant=None,
+    )
+
+    next_resp = AIResponse(**next_item_data)
+    wait_msg = await message.answer(f"⏳ Transaction {current}/{total}...")
+    await _handle_ai_response(wait_msg, state, session, user, next_resp)
+    return True
 
 
 async def _save_transaction(
@@ -365,8 +401,9 @@ async def _save_transaction(
             parse_mode="HTML",
         )
     else:
-        await state.clear()
         await message.edit_text(result_text)
+        if not await _advance_multi_queue(message, state, session, user):
+            await state.clear()
 
 
 async def _continue_after_suggestion(
@@ -700,10 +737,13 @@ async def handle_confirm_yes(
 
 
 @router.callback_query(AITransaction.confirm, F.data == "ai_confirm:no")
-async def handle_confirm_no(cb: CallbackQuery, state: FSMContext) -> None:
-    await state.clear()
+async def handle_confirm_no(
+    cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
+) -> None:
     await cb.message.edit_text("❌ Cancelled.")
     await cb.answer()
+    if not await _advance_multi_queue(cb.message, state, session, user):
+        await state.clear()
 
 
 # ── Pattern Learning ───────────────────────────────────────────────────────
@@ -732,14 +772,18 @@ async def handle_pattern_yes(
             cb.message.text + f"\n\n✅ Saved! I'll remember <b>{merchant}</b>.",
             parse_mode="HTML",
         )
-    await state.clear()
     await cb.answer("Remembered!")
+    if not await _advance_multi_queue(cb.message, state, session, user):
+        await state.clear()
 
 
 @router.callback_query(AITransaction.confirm_pattern, F.data == "ai_pattern:no")
-async def handle_pattern_no(cb: CallbackQuery, state: FSMContext) -> None:
-    await state.clear()
+async def handle_pattern_no(
+    cb: CallbackQuery, state: FSMContext, session: AsyncSession, user: User
+) -> None:
     await cb.answer("OK")
+    if not await _advance_multi_queue(cb.message, state, session, user):
+        await state.clear()
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -797,7 +841,7 @@ async def _process_input(
     active_account_ids = {a.id for a in ctx["accounts"] if not a.is_archive}
     pattern_overrides = _match_patterns(text_input, ctx["patterns_data"], active_account_ids)
 
-    ai_resp, conv_history = await ai_service.start_parse(
+    ai_items, conv_history = await ai_service.start_parse_multi(
         text_input=text_input,
         accounts_data=ctx["accounts_data"],
         categories_data=ctx["categories_data"],
@@ -809,22 +853,39 @@ async def _process_input(
 
     await state.update_data(conv_history=conv_history)
 
-    if not ai_resp:
+    if not ai_items:
         await wait_msg.edit_text("❌ Failed to parse. Please try again.")
         return
 
-    # Apply pattern overrides on top of AI response
+    # Apply pattern overrides to all items
     if pattern_overrides:
-        for key, value in pattern_overrides.items():
-            setattr(ai_resp.transaction, key, value)
-        # Remove suggestions for fields already filled by pattern
-        ai_resp.suggestions = [
-            s for s in ai_resp.suggestions
-            if not (s.entity_type == "account" and "account_id" in pattern_overrides)
-            and not (s.entity_type == "category" and "category_id" in pattern_overrides)
-        ]
+        for ai_resp in ai_items:
+            for key, value in pattern_overrides.items():
+                setattr(ai_resp.transaction, key, value)
+            ai_resp.suggestions = [
+                s for s in ai_resp.suggestions
+                if not (s.entity_type == "account" and "account_id" in pattern_overrides)
+                and not (s.entity_type == "category" and "category_id" in pattern_overrides)
+            ]
 
-    await _handle_ai_response(wait_msg, state, session, user, ai_resp)
+    # Queue remaining items for later processing
+    if len(ai_items) > 1:
+        queued = [item.model_dump() for item in ai_items[1:]]
+        await state.update_data(
+            pending_multi=queued,
+            multi_total=len(ai_items),
+            multi_current=1,
+        )
+    else:
+        await state.update_data(pending_multi=[], multi_total=1, multi_current=1)
+
+    first = ai_items[0]
+    total = len(ai_items)
+    if total > 1:
+        await wait_msg.edit_text(f"📋 Found <b>{total}</b> transactions. Processing 1/{total}...", parse_mode="HTML")
+        wait_msg = await message.answer("⏳")
+
+    await _handle_ai_response(wait_msg, state, session, user, first)
 
 
 @router.message(StateFilter(None), F.text, F.forward_origin)

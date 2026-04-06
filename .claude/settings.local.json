@@ -5,7 +5,9 @@
       "Bash(docker compose:*)",
       "Bash(.venv/Scripts/python -m alembic revision --autogenerate -m \"initial schema\")",
       "Bash(.venv/Scripts/python -m alembic upgrade head)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/services/ai.py'\\).read\\(\\)\\); print\\('ai.py OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('app/bot/handlers/ai.py'\\).read\\(\\)\\); print\\('handlers/ai.py OK'\\)\")"
     ]
   }
 }
